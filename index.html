@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo & Portal Pombagiras</title>
+
+    <style>
+        /* --- CONFIGURAÇÕES VISUAIS E CORES --- */
+        :root {
+            --cor-roxo: #4b0082;
+            --cor-lilas: #e0b0ff;
+            --cor-vermelho: #ff0000;
+            --cor-preto: #050505;
+            --texto-destaque: #ffd700;
+            --cor-acerto: #00ff00;
+            --cor-erro: #ff0000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--cor-preto);
+            color: white;
+            overflow-x: hidden;
+            transition: background-color 1.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- BACKGROUND CHUVA --- */
+        #chuva-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .elemento-chuva {
+            position: absolute;
+            font-size: 24px;
+            animation: cair linear infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes cair {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0.3; }
+        }
+
+        /* --- CONTAINER PRINCIPAL (VIDRO) --- */
+        #app-container {
+            z-index: 10;
+            width: 95%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid var(--cor-lilas);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 80px;
+            box-shadow: 0 0 20px var(--cor-vermelho);
+            text-align: center;
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+
+        /* --- NAVEGAÇÃO --- */
+        .nav-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .nav-btn {
+            background: rgba(75, 0, 130, 0.3);
+            border: 1px solid var(--cor-lilas);
+            color: var(--cor-lilas);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .nav-btn:hover {
+            background: var(--cor-lilas);
+            color: black;
+            box-shadow: 0 0 10px var(--cor-lilas);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: var(--cor-lilas);
+            color: black;
+            font-weight: 900;
+        }
+
+        .btn-hub {
+            border-color: #00ff00;
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .btn-social {
+            background: linear-gradient(90deg, #ff0080, #ff8c00);
+            color: white;
+            border: none;
+            font-weight: 900;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            animation: brilho-social 2s infinite alternate;
+        }
+
+        @keyframes brilho-social {
+            0% { box-shadow: 0 0 5px #ff0080; }
+            100% { box-shadow: 0 0 15px #ff8c00; }
+        }
+
+        .btn-portal {
+            border-color: var(--texto-destaque);
+            color: var(--texto-destaque);
+            animation: pulsar-gold 2s infinite ease-in-out;
+        }
+
+        @keyframes pulsar-gold {
+            0% { box-shadow: 0 0 2px var(--texto-destaque); }
+            50% { box-shadow: 0 0 15px var(--texto-destaque); background: rgba(255, 215, 0, 0.2); }
+            100% { box-shadow: 0 0 2px var(--texto-destaque); }
+        }
+
+        .btn-panico {
+            background: #8b0000;
+            color: white;
+            border: 2px solid #ff0000;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            min-width: 45px;
+            padding: 0;
+            font-size: 1.4rem;
+            box-shadow: 0 0 10px #ff0000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1, h2, h3 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--texto-destaque);
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        /* --- QUIZ --- */
+        .pergunta-nivel { font-size: 0.8rem; color: var(--cor-lilas); margin-bottom: 10px; }
+        .pergunta-texto { font-size: 1.2rem; margin-bottom: 25px; font-weight: bold; }
+        .opcoes { display: flex; flex-direction: column; gap: 10px; }
+
+        .quiz-btn {
+            background: transparent;
+            border: 1px solid var(--cor-lilas);
+            color: white;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        .quiz-btn:hover:not(:disabled) {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: var(--texto-destaque);
+            transform: scale(1.02);
+        }
+
+        .quiz-btn.btn-correto {
+            background-color: var(--cor-acerto);
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 0 15px var(--cor-acerto);
+        }
+
+        .quiz-btn.btn-incorreto {
+            background-color: var(--cor-erro);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 15px var(--cor-erro);
+        }
+
+        .hidden { display: none !important; }
+
+        .progress-bar { width: 100%; height: 5px; background: #333; margin-top: 20px; }
+        .progress-fill { height: 100%; background: var(--cor-vermelho); width: 0%; transition: width 0.3s; }
+
+        .card-pombagira {
+            border: 1px solid var(--texto-destaque);
+            padding: 20px;
+            margin-top: 20px;
+            background: rgba(20, 0, 20, 0.9);
+        }
+
+        .audio-msg {
+            font-style: italic;
+            color: var(--cor-lilas);
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 3px solid var(--cor-vermelho);
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="chuva-container"></div>
+
+<div id="app-container">
+
+<nav class="nav-grid">
+    <a href="https://alexialuzdeferro.github.io/redes_sociais/" target="_blank" class="nav-btn btn-social">REDES SOCIAIS</a>
+    <a href="https://alexialuzdeferro.github.io/Hub-Pombagiras/" target="_blank" class="nav-btn btn-hub">Hub</a>
+    <button class="nav-btn active" onclick="reiniciarApp()">Oráculo</button>
+    <a href="https://alexialuzdeferro.github.io/grimorio-das-pombagiras/" target="_blank" class="nav-btn">Grimório</a>
+    <a href="https://alexialuzdeferro.github.io/PONTOS-CANTADOS/" target="_blank" class="nav-btn">Pontos</a>
+    <a href="https://alexialuzdeferro.github.io/dark-melancholy/" target="_blank" class="nav-btn">🌑 Dark</a>
+    <a href="https://alexialuzdeferro.github.io/Pombagiras/" target="_blank" class="nav-btn">Blog</a>
+    <a href="https://linktr.ee/alexiarosadefogo" target="_blank" class="nav-btn">Bio</a>
+    <a href="https://pombagiras.my.canva.site/" target="_blank" class="nav-btn">Canvas</a>
+    <a href="https://bio.site/AlmasdePombagira" target="_blank" class="nav-btn btn-portal">Portal</a>
+    <a href="https://alexialuzdeferro.github.io/Business-Card/" target="_blank" class="nav-btn btn-panico" title="Emergência / Business Card">🔥</a>
+</nav>
+
+<div id="aba-oraculo">
+    <div id="tela-inicio">
+        <h1>Oráculo das 12 Luas</h1>
+        <p>O destino aguarda. As Guardiãs estão prontas.</p>
+        <p style="font-size:0.9rem;color:#ccc;">Clique abaixo para iniciar a consulta espiritual.</p>
+        <br>
+        <button class="quiz-btn" onclick="iniciarQuiz()">Abrir o Portal</button>
+    </div>
+
+    <div id="tela-quiz" class="hidden">
+        <div class="pergunta-nivel" id="nivel-display">NÍVEL 1</div>
+        <div class="pergunta-texto" id="pergunta-texto"></div>
+        <div class="opcoes" id="opcoes-container"></div>
+        <div class="progress-bar"><div class="progress-fill" id="barra-progresso"></div></div>
+    </div>
+
+    <div id="tela-resultado" class="hidden">
+        <h2>Sessão Encerrada</h2>
+        <p>Desempenho: <span id="pontuacao-final"></span></p>
+        <hr style="border-color:var(--cor-roxo);opacity:0.5;">
+        <h3>Sua Guardiã Regente:</h3>
+        <div id="oraculo-destino"></div>
+        <button class="quiz-btn" onclick="reiniciarApp()" style="margin-top:30px;">Consultar Novamente</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+// ========== QUIZ / ORÁCULO ==========
+const pombagirasDB = [
+    { nome:"Maria Padilha", titulo:"A Rainha", dominio:"Comando", msg:"Maria Padilha é a rainha que governa com sabedoria e força. Ela ensina a liderar com justiça e a enfrentar desafios com coragem." },
+    { nome:"Maria Mulambo", titulo:"A Curadora", dominio:"Cura", msg:"Maria Mulambo é a mãe que acolhe e cura. Ela ensina que a humildade é o caminho para a verdadeira transformação." },
+    { nome:"Maria Quitéria", titulo:"A Guerreira", dominio:"Proteção", msg:"Maria Quitéria é a guerreira que defende os seus com bravery. Ela empunha a espada da justiça e nos ensina a lutar por nossos direitos." },
+    { nome:"Rosa Caveira", titulo:"Guardiã dos Ciclos", dominio:"Justiça", msg:"Rosa Caveira é a guardiã da justiça e do equilíbrio. Ela nos lembra que a morte é apenas uma passagem." },
+    { nome:"Dama da Noite", titulo:"A Guardiã dos Segredos", dominio:"Mistério", msg:"Dama da Noite é a guardiã dos segredos e da sabedoria oculta. Ela ilumina nosso caminho com a luz da lua." },
+    { nome:"Sete Saias", titulo:"A Dançarina", dominio:"Alegria", msg:"Sete Saias é a dançarina que traz a alegria e a cor para nossa vida. Com suas saias coloridas, ela nos ensina a celebrar cada momento." },
+    { nome:"Pombagira Cigana", titulo:"A Viajante", dominio:"Liberdade", msg:"Pombagira Cigana é a viajante que abre caminhos e traz prosperidade. Com ela, a sorte está sempre ao nosso lado." },
+    { nome:"Maria Navalha", titulo:"A Malandrina", dominio:"Rua", msg:"Maria Navalha é a protetora das ruas e dos que lutam para sobreviver. Com sua navalha, ela nos ensina a ser espertos." },
+    { nome:"Pombagira da Praia", titulo:"Guardiã das Águas", dominio:"Emoção", msg:"Pombagira da Praia é a guardiã das águas e das emoções. Com suas ondas, ela limpa nossa alma." },
+    { nome:"Maria Farrapo", titulo:"A Transformadora", dominio:"Sanidade", msg:"Maria Farrapo é a transformadora da mente. Com seus farrapos, ela nos ensina que até no caos podemos encontrar a sanidade." },
+    { nome:"Pombagira Menina", titulo:"A Inocente", dominio:"Renovação", msg:"Pombagira Menina é a guardiã da inocência e da renovação. Com seu sorriso doce, ela nos ensina que sempre podemos recomeçar." },
+    { nome:"Pombagira da Figueira", titulo:"Guardiã das Raízes", dominio:"Ancestralidade", msg:"Pombagira da Figueira é a guardiã das raízes e da ancestralidade. Com seus galhos fortes, ela nos conecta aos antepassados." }
+];
+
+const perguntasBase = [
+    { t: "Qual Pombagira é conhecida como a 'Rainha das Pombagiras', associada ao poder, liderança e justiça, e costuma usar coroa e cetro?", r: "Maria Padilha", o: ["Maria Mulambo", "Maria Padilha", "Maria Quitéria", "Rosa Caveira"] },
+    { t: "Qual Pombagira tem o nome que significa 'trapo' ou 'farrapo' e atua na cura espiritual, humildade e renovação?", r: "Maria Mulambo", o: ["Maria Farrapo", "Maria Mulambo", "Pombagira Menina", "Dama da Noite"] },
+    { t: "Qual Pombagira é considerada a guerreira das Pombagiras, associada à coragem, proteção e batalhas espirituais, inspirada em heroínas da Independência do Brasil?", r: "Maria Quitéria", o: ["Maria Quitéria", "Maria Navalha", "Sete Saias", "Pombagira Cigana"] },
+    { t: "Qual Pombagira está ligada à justiça divina, ao ciclo da vida e da morte, e usa símbolos como caveira e rosas vermelhas?", r: "Rosa Caveira", o: ["Maria Padilha", "Rosa Caveira", "Maria Mulambo", "Pombagira da Praia"] },
+    { t: "Qual Pombagira é a guardiã dos segredos, da intuição e do oculto, frequentemente associada à lua e velas roxas?", r: "Dama da Noite", o: ["Dama da Noite", "Pombagira da Figueira", "Maria Farrapo", "Sete Saias"] },
+    { t: "Qual Pombagira representa a alegria, a dança e a intensidade da vida, simbolizada por sete saias coloridas?", r: "Sete Saias", o: ["Pombagira Cigana", "Maria Navalha", "Sete Saias", "Pombagira Menina"] },
+    { t: "Qual Pombagira está ligada à liberdade, prosperidade e abertura de caminhos, carregando lenço na cabeça e baralho cigano?", r: "Pombagira Cigana", o: ["Pombagira Cigana", "Maria Quitéria", "Dama da Noite", "Maria Padilha"] },
+    { t: "Qual Pombagira é protetora das ruas, da malandragem e da sobrevivência, simbolizada pela navalha e oferendas como cachaça e cigarros?", r: "Maria Navalha", o: ["Maria Farrapo", "Maria Navalha", "Pombagira da Praia", "Maria Mulambo"] },
+    { t: "Qual Pombagira está associada às emoções, à limpeza espiritual e ao poder purificador do mar, usando conchas e velas azuis em seus trabalhos?", r: "Pombagira da Praia", o: ["Pombagira da Praia", "Pombagira da Figueira", "Rosa Caveira", "Pombagira Menina"] },
+    { t: "Qual Pombagira atua na fronteira entre sanidade e caos mental, ajudando a transformar a confusão em clareza e usando farrapos como símbolo?", r: "Maria Farrapo", o: ["Maria Mulambo", "Maria Farrapo", "Maria Padilha", "Sete Saias"] },
+    { t: "Qual Pombagira representa a renovação, a inocência e o recomeço, frequentemente associada a bonecas, flores brancas e velas cor-de-rosa?", r: "Pombagira Menina", o: ["Pombagira Menina", "Pombagira Cigana", "Dama da Noite", "Maria Quitéria"] },
+    { t: "Qual Pombagira é a guardiã da ancestralidade e da terra, conectando aos antepassados por meio da figueira e oferendas como sementes e folhas?", r: "Pombagira da Figueira", o: ["Pombagira da Figueira", "Pombagira da Praia", "Maria Navalha", "Rosa Caveira"] }
+];
+
+let perguntasSelecionadas = [], indiceAtual = 0, acertos = 0;
+const emojis = ['🍷','🔱','🌹','💃','🔥','🕯️','🚬','🌙','💀','🗡️'];
+
+function criarChuva(){
+    const c = document.getElementById('chuva-container');
+    setInterval(()=>{
+        const e = document.createElement('div');
+        e.className = 'elemento-chuva';
+        e.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        e.style.left = Math.random() * 100 + 'vw';
+        e.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        c.appendChild(e);
+        setTimeout(()=>e.remove(), 5000);
+    }, 300);
+}
+
+function reiniciarApp() {
+    indiceAtual = 0;
+    acertos = 0;
+    perguntasSelecionadas = [];
+    document.getElementById('tela-inicio').classList.remove('hidden');
+    document.getElementById('tela-quiz').classList.add('hidden');
+    document.getElementById('tela-resultado').classList.add('hidden');
+}
+
+function iniciarQuiz(){
+    document.getElementById('tela-inicio').classList.add('hidden');
+    document.getElementById('tela-quiz').classList.remove('hidden');
+    perguntasSelecionadas = [...perguntasBase];
+    indiceAtual = 0;
+    acertos = 0;
+    mostrarPergunta();
+}
+
+function mostrarPergunta(){
+    if (indiceAtual >= perguntasSelecionadas.length) {
+        finalizarQuiz();
+        return;
+    }
+
+    const p = perguntasSelecionadas[indiceAtual];
+    document.getElementById('pergunta-texto').innerText = p.t;
+    document.getElementById('nivel-display').innerText = `NÍVEL ${indiceAtual + 1}`;
+    
+    // Atualizar barra de progresso
+    const progresso = ((indiceAtual) / perguntasSelecionadas.length) * 100;
+    document.getElementById('barra-progresso').style.width = progresso + '%';
+    
+    const d = document.getElementById('opcoes-container');
+    d.innerHTML = '';
+    p.o.forEach(op => {
+        const b = document.createElement('button');
+        b.className = 'quiz-btn';
+        b.innerText = op;
+        b.onclick = () => verificarResposta(b, op, p.r);
+        d.appendChild(b);
+    });
+}
+
+function verificarResposta(btn, esc, cor){
+    const botoes = document.querySelectorAll('.quiz-btn');
+    botoes.forEach(b => b.disabled = true);
+
+    if(esc === cor){
+        btn.classList.add('btn-correto');
+        acertos++;
+    } else {
+        btn.classList.add('btn-incorreto');
+        const corretaBtn = Array.from(botoes).find(b => b.innerText === cor);
+        if(corretaBtn) corretaBtn.classList.add('btn-correto');
+    }
+
+    setTimeout(() => {
+        indiceAtual++;
+        mostrarPergunta();
+    }, 1500);
+}
+
+function finalizarQuiz(){
+    document.getElementById('tela-quiz').classList.add('hidden');
+    document.getElementById('tela-resultado').classList.remove('hidden');
+    document.getElementById('pontuacao-final').innerText = `${acertos} de ${perguntasBase.length}`;
+
+    const guardia = pombagirasDB[acertos % pombagirasDB.length];
+    document.getElementById('oraculo-destino').innerHTML = `
+        <div class="card-pombagira">
+            <h3>${guardia.nome} — ${guardia.titulo}</h3>
+            <p><strong>Domínio:</strong> ${guardia.dominio}</p>
+            <div class="audio-msg">"${guardia.msg}"</div>
+        </div>
+    `;
+}
+
+// ========== INICIALIZAÇÃO ==========
+window.onload = function() {
+    criarChuva();
+};
+</script>
+
+</body>
+</html>
